@@ -25,30 +25,14 @@ function CreatePost() {
     try {
       setLoading(true);
 
-      const { data } = await axios.get(
-        "https://e91197d9fa22.ngrok-free.app/api/posts/generate-presigned-url",
-        { params: { fileName: file.name, fileType: file.type } }
-      );
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", file);
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("user_id", 1); // placeholder user ID
 
-      console.log(data);
-
-      await axios.put(data.uploadUrl, file, {
-        headers: { "Content-Type": file.type },
-      });
-
-      console.log("Saving post with:", {
-        userId: 1,
-        title: formData.title,
-        description: formData.description,
-        fileUrl: data.fileUrl,
-      });
-
-      // Step 3: save post in DB
-      await axios.put("https://e91197d9fa22.ngrok-free.app/api/posts/", {
-        user_id: 1, // TODO: replace with real user id from auth
-        title: formData.title,
-        text_content: formData.description,
-        image_url: data.fileUrl,
+      await axios.post("http://localhost:3000/api/posts", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       alert("Post created successfully!");
@@ -56,7 +40,7 @@ function CreatePost() {
       setFile(null);
     } catch (error) {
       console.error("Error uploading post:", error);
-      alert("Succesfully created post");
+      alert("Error creating post");
     } finally {
       setLoading(false);
     }

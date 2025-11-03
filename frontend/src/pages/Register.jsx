@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 
 function Register() {
@@ -40,25 +41,24 @@ function Register() {
     } else {
       setErrors({});
       try {
-        const res = await fetch(
-          "https://e91197d9fa22.ngrok-free.app/api/users/register",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
-          }
-        );
+        // ✅ Updated to local backend endpoint
+        const res = await fetch("http://localhost:5000/api/users/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
 
         const data = await res.json();
 
         if (res.ok) {
-          alert("Account created");
+          alert("Account created successfully!");
           window.location.href = "/login";
         } else {
           alert(data.message || "Something went wrong");
         }
       } catch (error) {
-        console.log(`Error : ${error.message}`);
+        console.error("Error:", error.message);
+        alert("Unable to connect to the server. Please check your backend.");
       }
     }
   };
@@ -68,7 +68,7 @@ function Register() {
       className="min-h-screen flex items-center justify-center bg-black bg-cover bg-center relative"
       style={{
         backgroundImage:
-          "url('https://images.unsplash.com/photo-1537861295351-76bb831ece99?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+          "url('https://images.unsplash.com/photo-1537861295351-76bb831ece99?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0')",
       }}
     >
       <div className="absolute inset-0 bg-black/70"></div>

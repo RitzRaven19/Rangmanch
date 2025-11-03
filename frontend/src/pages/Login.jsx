@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import axios from "axios";
 
@@ -18,8 +19,9 @@ function Login() {
     console.log("Form data:", formData);
 
     try {
+      // ✅ Updated: Local backend URL
       const { data } = await axios.post(
-        "https://e91197d9fa22.ngrok-free.app/api/users/login",
+        "http://localhost:5000/api/users/login",
         formData,
         {
           headers: { "Content-Type": "application/json" },
@@ -30,13 +32,15 @@ function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
+        alert("Login successful!");
         // optional: redirect to dashboard or home
+        // window.location.href = "/"; 
+      } else {
+        alert("Invalid credentials or missing token");
       }
     } catch (error) {
-      console.error(
-        "Login error:",
-        error.response?.data || error.message
-      );
+      console.error("Login error:", error.response?.data || error.message);
+      alert("Login failed. Please check your credentials.");
     }
   };
 
@@ -80,6 +84,7 @@ function Login() {
               onChange={handleChange}
               placeholder="Enter username"
               className="w-full p-3 rounded-xl bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             />
           </div>
 
@@ -91,6 +96,7 @@ function Login() {
               onChange={handleChange}
               placeholder="Enter password"
               className="w-full p-3 rounded-xl bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
             />
           </div>
 

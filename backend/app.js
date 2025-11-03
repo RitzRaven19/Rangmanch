@@ -13,6 +13,8 @@ console.log(postRoutes);
 
 const app = express();
 
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+
 // Allowed origins for CORS
 const whitelist = [
   "http://localhost:5173",                   // Local dev
