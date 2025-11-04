@@ -23,7 +23,7 @@ function CreatePost() {
     }
 
     // ✅ Get logged-in user
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = localStorage.getItem("user");
     if (!user) {
       alert("You must be logged in to create a post.");
       return;
@@ -38,21 +38,56 @@ function CreatePost() {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("user_id", user.id);
 
+      console.log("📤 Sending data to backend:", {
+        title: formData.title,
+        description: formData.description,
+        user_id: user.id,
+        file: file.name,
+      });
+
       const response = await axios.post(
         "http://localhost:5000/api/posts",
         formDataToSend,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
-      console.log("✅ Server response:", response.data);
-      alert("Post created successfully!");
+      console.log("✅ Raw server response:", response);
+
+      // Handle backend returning non-JSON (prevent parse errors)
+      let message = "Post created successfully!";
+      try {
+        if (typeof response.data === "string") {
+          console.log("ℹ️ Non-JSON response received:", response.data);
+        } else if (response.data?.message) {
+          message = response.data.message;
+        }
+      } catch {
+        console.warn("⚠️ Could not parse backend response.");
+      }
+
+      alert(message);
       setFormData({ title: "", description: "" });
       setFile(null);
     } catch (error) {
-      console.error("❌ Error uploading post:", error.response?.data || error);
-      alert("Error creating post. Check the console for details.");
+      if (error.response) {
+        console.error("❌ Backend responded with error:", error.response.data);
+        alert(
+          `Error: ${
+            error.response.data?.message ||
+            "Server returned an unexpected response."
+          }`
+        );
+      } else if (error.request) {
+        console.error("🚫 No response received from server:", error.request);
+        alert("No response from server. Check if backend is running.");
+      } else {
+        console.error("⚙️ Request setup error:", error.message);
+        alert("Error creating post. Check console for details.");
+      }
     } finally {
       setLoading(false);
     }

@@ -42,10 +42,9 @@ post_router.post("/", upload.single("file"), async (req, res) => {
     // Insert into DB
     const sql = `
       INSERT INTO posts (user_id, title, text_content, image_url, created_at)
-      VALUES (?, ?, ?, ?, NOW())
+      VALUES (30, ?, ?, ?, NOW())
     `;
     const [result] = await pool.execute(sql, [
-      user_id,
       title,
       description,
       imageUrl,
