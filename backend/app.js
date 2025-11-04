@@ -8,23 +8,22 @@ import postRoutes from "./routes/postRoutes.js";
 
 dotenv.config();
 
-console.log(userRoutes);
-console.log(postRoutes);
-
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+// ✅ Serve static uploads (for images)
+app.use("/uploads", express.static("uploads"));
 
-// Allowed origins for CORS
+// ✅ CORS configuration — allow local + production
 const whitelist = [
-  "http://localhost:5173",                   // Local dev
-  "https://rangmanch-site.netlify.app",     // Netlify frontend
-  "https://e91197d9fa22.ngrok-free.app"    // ngrok HTTPS URL (update if URL changes)
+  "http://localhost:5173",
+  "https://rangmanch-site.netlify.app",
+  "https://e91197d9fa22.ngrok-free.app"
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
+    // Allow requests with no origin (like curl, Postman)
       if (!origin || whitelist.includes(origin)) {
         callback(null, true);
       } else {
@@ -42,11 +41,11 @@ app.options("*", cors()); // preflight support
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Mount routes (use relative paths only)
+// ✅ Mount routes
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

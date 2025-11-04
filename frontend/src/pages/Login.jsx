@@ -32,6 +32,7 @@ function Login() {
 
       if (data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", data.user.username)
         alert("Login successful!");
         // optional: redirect to dashboard or home
         // window.location.href = "/"; 

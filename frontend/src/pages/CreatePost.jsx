@@ -22,6 +22,13 @@ function CreatePost() {
       return;
     }
 
+    // ✅ Get logged-in user
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      alert("You must be logged in to create a post.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -29,18 +36,23 @@ function CreatePost() {
       formDataToSend.append("file", file);
       formDataToSend.append("title", formData.title);
       formDataToSend.append("description", formData.description);
-      formDataToSend.append("user_id", 1); // placeholder user ID
+      formDataToSend.append("user_id", user.id);
 
-      await axios.post("http://localhost:3000/api/posts", formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/posts",
+        formDataToSend,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
+      console.log("✅ Server response:", response.data);
       alert("Post created successfully!");
       setFormData({ title: "", description: "" });
       setFile(null);
     } catch (error) {
-      console.error("Error uploading post:", error);
-      alert("Error creating post");
+      console.error("❌ Error uploading post:", error.response?.data || error);
+      alert("Error creating post. Check the console for details.");
     } finally {
       setLoading(false);
     }

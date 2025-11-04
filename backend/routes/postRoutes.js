@@ -1,69 +1,69 @@
 import express from "express";
-import AWS from "aws-sdk";
-import dotenv from "dotenv";
+import multer from "multer";
+import path from "path";
 import pool from "../config/db.js";
+import fs from "fs";
 
-dotenv.config();
 const post_router = express.Router();
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
+// ✅ Ensure uploads directory exists
+const uploadDir = "./uploads";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// ✅ Multer configuration (store files locally)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
 });
 
-// 1️⃣ Generate presigned URL
-post_router.get("/generate-presigned-url", async (req, res) => {
-  try {
-    const { fileName, fileType } = req.query;
+const upload = multer({ storage });
 
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: `uploads/${Date.now()}-${fileName}`,
-      Expires: 60, // 1 minute
-      ContentType: fileType,
-    };
-
-    const uploadUrl = await s3.getSignedUrlPromise("putObject", params);
-    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
-
-    res.json({ uploadUrl, fileUrl });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to generate URL" });
-  }
-});
-
-// 2️⃣ Save post metadata to DB
-post_router.post("/", async (req, res) => {
-  console.log("Received Body: ", req.body);
+// ✅ POST route to create a post
+post_router.post("/", upload.single("file"), async (req, res) => {
+  console.log("📦 Received POST request:", req.body);
+  console.log("📸 File details:", req.file);
 
   try {
-    const { title, description, fileUrl, userId } = req.body;
+    const { title, description, user_id } = req.body;
 
+    if (!user_id) {
+      return res.status(400).json({ error: "Missing user_id" });
+    }
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    // Insert into DB
     const sql = `
-      INSERT INTO posts (user_id, title, text_content, image_url)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO posts (user_id, title, text_content, image_url, created_at)
+      VALUES (?, ?, ?, ?, NOW())
     `;
     const [result] = await pool.execute(sql, [
-      userId,
+      user_id,
       title,
-      text_content,
-      image_url,
+      description,
+      imageUrl,
     ]);
 
-    const insertedPost = {
+    const newPost = {
       post_id: result.insertId,
-      user_id: userId,
+      user_id,
       title,
       text_content: description,
-      image_url: fileUrl,
+      image_url: imageUrl,
       created_at: new Date(),
     };
 
-    res.status(201).json(insertedPost);
+    console.log("✅ Post created:", newPost);
+    res.status(201).json(newPost);
   } catch (error) {
-    console.error("Error inserting post:", error);
+    console.error("❌ Error creating post:", error);
     res.status(500).json({ error: "Failed to create post" });
   }
 });
